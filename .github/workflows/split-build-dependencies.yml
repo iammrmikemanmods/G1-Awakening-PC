@@ -1,0 +1,47 @@
+name: Transfer offline compiler dependencies
+on:
+  push:
+    branches: [build/updated-pc-executable]
+    paths: [.github/workflows/split-build-dependencies.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  split:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Download previously verified dependency archive and split
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p input output/part0 output/part1
+          gh run download 41211903960 --repo iammrmikemanmods/G1-Awakening-PC --name G1-PC-Offline-Build-Dependencies --dir input
+          expected=$(cut -d' ' -f1 input/g1-offline-deps.sha256)
+          echo "$expected  input/g1-offline-deps.tar.gz" | sha256sum -c -
+          split -b 400M -d -a 2 input/g1-offline-deps.tar.gz output/deps.part-
+          test -f output/deps.part-00 && test -f output/deps.part-01
+          test ! -f output/deps.part-02
+          mv output/deps.part-00 output/part0/
+          mv output/deps.part-01 output/part1/
+          printf '%s  g1-offline-deps.tar.gz\n' "$expected" > output/part0/SHA256SUMS.txt
+          cp output/part0/SHA256SUMS.txt output/part1/
+          printf '# Archive policy\nJoin deps.part-00 and deps.part-01 in order, then verify SHA256SUMS.txt before extracting. Compiler dependencies only, not a game release.\n' > output/part0/README_MEMORY_ZIP_POLICY.md
+          cp output/part0/README_MEMORY_ZIP_POLICY.md output/part1/
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: G1-Compiler-Dependencies-Part0
+          path: output/part0/
+          compression-level: 0
+          retention-days: 3
+          if-no-files-found: error
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: G1-Compiler-Dependencies-Part1
+          path: output/part1/
+          compression-level: 0
+          retention-days: 3
+          if-no-files-found: error
