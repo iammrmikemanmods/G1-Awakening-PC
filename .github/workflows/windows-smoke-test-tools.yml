@@ -18,12 +18,19 @@ jobs:
           sudo apt-get update -qq
           mkdir -p packages root metadata
           cd packages
-          apt-get download wine64 libwine libpcap0.8t64 libgphoto2-6 libgphoto2-port12 libvkd3d1 libosmesa6 libunwind8
+          apt-get download wine64 libwine libpcap0.8t64 libvkd3d1 libosmesa6 libunwind8
+          # Resolve distribution-renamed optional libraries from package metadata.
+          for stem in libgphoto2-6 libgphoto2-port12; do
+            package=$(apt-cache pkgnames | grep -E "^${stem}(t64)?$" | while read -r p; do
+              if apt-cache policy "$p" | grep -qE 'Candidate: [0-9]'; then echo "$p"; break; fi
+            done)
+            test -n "$package"
+            apt-get download "$package"
+          done
           sha256sum *.deb > ../metadata/debian-packages.sha256
           for package in *.deb; do dpkg-deb --field "$package" Package Version >> ../metadata/versions.txt; dpkg-deb --extract "$package" ../root; done
           cd ..
           printf '# Test-tool archive policy\nIsolated Wine x64 runtime for Windows smoke tests. Not part of the game distribution. Preserve upstream license notices.\n' > README_MEMORY_ZIP_POLICY.md
-          # No font files are exported in this build-tools artifact.
           find root -type f \( -iname '*.ttf' -o -iname '*.otf' -o -iname '*.fon' \) -delete
           tar -czf wine-smoke-tools.tar.gz root metadata README_MEMORY_ZIP_POLICY.md
           sha256sum wine-smoke-tools.tar.gz > SHA256SUMS.txt
