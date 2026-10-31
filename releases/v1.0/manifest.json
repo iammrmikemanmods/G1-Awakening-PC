@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "repository": "iammrmikemanmods/G1-Awakening-PC",
+  "tag": "v1.0",
+  "title": "G1 Awakening PC - 1.0",
+  "build": "1.0.1",
+  "exe_member": "G1_Awakening_PC_1.0/G1Awakening.exe",
+  "assets": [
+    {
+      "name": "G1Awakening.exe",
+      "bytes": 115109888,
+      "sha256": "3c54f46c8967d927977ba1a0d99abdd91a078b59c2fd5d5fcaed8cda99316694"
+    },
+    {
+      "name": "G1_Awakening_PC_1.0_Windows.zip",
+      "bytes": 117169062,
+      "sha256": "bf5bdcb8acce7eba93c4779d0fcab3842b7145b54fba665245d1ef95db627d69"
+    },
+    {
+      "name": "G1_Awakening_PC_1.0_Source.zip",
+      "bytes": 46384102,
+      "sha256": "f46990873edd10df960d5e33105c1c32aae128c0da2dc85d6c5504459211a077"
+    },
+    {
+      "name": "BUILD_REPORT.md",
+      "bytes": 4837,
+      "sha256": "a530b996e5c7357c4d9bd50542aacf05c7a8048481e73ac519ad4d8fc09688a6"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 359,
+      "sha256": "924d6072d84f8a07a3f7a769ba5b24bcbd25631272883968247cc74226bfd49e"
+    }
+  ]
+}

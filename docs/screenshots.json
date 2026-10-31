@@ -1,0 +1,35 @@
+[
+  {
+    "path": "docs/images/tactical-movement.webp",
+    "caption": "Tactical movement and terrain",
+    "preview_dimensions": [480, 270],
+    "original_dimensions": [1280, 720],
+    "capture": "Windows build 1.0.1 executed under Wine 9.0, software graphics; window content captured directly",
+    "exe_sha256": "3c54f46c8967d927977ba1a0d99abdd91a078b59c2fd5d5fcaed8cda99316694",
+    "preview_sha256": "f716aa76fddc83a3b9809b7b60c89df2db429c55602808c7d4ae40c74265e4e3",
+    "original_sha256": "9909d55eef2ae80eb81f854f9e541f95f4df08986dc4ad36cdf6dfbe95607188",
+    "edits": "Window crop; preview downscale and WebP compression only"
+  },
+  {
+    "path": "docs/images/bumblebee-tech-specs.webp",
+    "caption": "Bumblebee 3D tech specs",
+    "preview_dimensions": [480, 270],
+    "original_dimensions": [1280, 720],
+    "capture": "Windows build 1.0.1 executed under Wine 9.0, software graphics; window content captured directly",
+    "exe_sha256": "3c54f46c8967d927977ba1a0d99abdd91a078b59c2fd5d5fcaed8cda99316694",
+    "preview_sha256": "21896aeab7160fcce8d227f8a6585a10fb90ea737293f4988611341e8a569f69",
+    "original_sha256": "4adfd7966ed915b5fff5dc3a0c6f9bd3363d68a592d6d8b6b65b8b938975f67a",
+    "edits": "Window crop; preview downscale and WebP compression only"
+  },
+  {
+    "path": "docs/images/story-ark.webp",
+    "caption": "Story: the Ark",
+    "preview_dimensions": [480, 270],
+    "original_dimensions": [1280, 720],
+    "capture": "Windows build 1.0.1 executed under Wine 9.0, software graphics; window content captured directly",
+    "exe_sha256": "3c54f46c8967d927977ba1a0d99abdd91a078b59c2fd5d5fcaed8cda99316694",
+    "preview_sha256": "7b669ace9cd3473ca8efc1a14bc1b1812c6f0d95286922bf6ade2afa4b6055b3",
+    "original_sha256": "0a2ffe93091c75a5f3074f6d730edd96ef95ee488a521036d3ee2bf88f2644be",
+    "edits": "Window crop; preview downscale and WebP compression only"
+  }
+]

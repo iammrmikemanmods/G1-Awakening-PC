@@ -1,0 +1,51 @@
+name: Public 1.0 release publication
+on:
+  push:
+    branches: [main]
+    paths:
+      - releases/v1.0/manifest.json
+      - .github/workflows/public-release-1.0.yml
+  release:
+    types: [published]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: public-release-1.0
+  cancel-in-progress: false
+jobs:
+  prepare:
+    if: github.repository == 'iammrmikemanmods/G1-Awakening-PC' && github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+        with:
+          persist-credentials: false
+      - name: Prepare draft without pretending missing binaries are downloadable
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/publish_release.py --prepare-draft
+  source:
+    if: github.repository == 'iammrmikemanmods/G1-Awakening-PC' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && github.event.release.tag_name == 'v1.0'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+        with:
+          ref: main
+      - name: Verify release assets and import the matching complete source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/publish_release.py --import-source
+      - name: Commit source and live download links
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add source tools provenance docs README.md
+          if ! git diff --cached --quiet; then
+            git commit -m 'Publish checksum-verified full 1.0 game source and download links'
+            git push origin HEAD:main
+          fi
