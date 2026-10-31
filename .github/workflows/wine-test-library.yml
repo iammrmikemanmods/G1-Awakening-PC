@@ -1,0 +1,29 @@
+name: Wine test-harness library
+on:
+  push:
+    branches: [build/updated-pc-executable]
+    paths: [.github/workflows/wine-test-library.yml]
+permissions:
+  contents: read
+jobs:
+  library:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Package runtime library for isolated tests
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo apt-get update -qq
+          mkdir root
+          apt-get download libz-mingw-w64
+          for p in *.deb; do dpkg-deb --extract "$p" root; done
+          apt-cache depends libwine > root/WINE_PACKAGE_DEPENDENCIES.txt
+          printf '# Test dependency only\nWindows zlib for isolated Wine tests; not part of the game distribution.\n' > root/README_MEMORY_ZIP_POLICY.md
+          find root -type f -print
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: G1-Wine-Zlib-Test-Library
+          path: root/
+          retention-days: 3
+          if-no-files-found: error

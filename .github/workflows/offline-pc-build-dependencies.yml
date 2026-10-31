@@ -1,0 +1,82 @@
+name: Full PC rebuild - offline dependencies
+on:
+  push:
+    branches: [build/updated-pc-executable]
+    paths: [.github/workflows/offline-pc-build-dependencies.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: offline-pc-dependencies
+  cancel-in-progress: false
+jobs:
+  acquire:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Collect pinned sources and compiler dependencies
+        shell: bash
+        run: |
+          set -euxo pipefail
+          B="$RUNNER_TEMP/g1-offline-deps"
+          mkdir -p "$B" "$B/mingw" "$B/tools" "$B/metadata"
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends g++-mingw-w64-x86-64-posix binutils-mingw-w64-x86-64 mingw-w64-x86-64-dev
+          dpkg-query -W 'gcc-mingw-w64*' 'g++-mingw-w64*' 'binutils-mingw*' 'mingw-w64*' > "$B/metadata/mingw-packages.txt"
+          git clone --no-checkout https://github.com/touchHLE/touchHLE.git "$B/upstream"
+          git -C "$B/upstream" checkout --detach ca1de89c578e79746f33c1332e28efd106c334ba
+          git -C "$B/upstream" submodule update --init --recursive
+          git -C "$B/upstream" submodule status --recursive > "$B/metadata/submodules.txt"
+          sha256sum "$B/upstream/Cargo.lock" > "$B/metadata/upstream-lock.sha256"
+          curl --fail --location --retry 3 https://archives.boost.io/release/1.81.0/source/boost_1_81_0.tar.bz2 -o "$RUNNER_TEMP/boost.tar.bz2"
+          echo "71feeed900fbccca04a3b4f2f84a7c217186f28a940ed8b7ed4725986baf99fa  $RUNNER_TEMP/boost.tar.bz2" | sha256sum -c -
+          mkdir -p "$B/upstream/vendor/boost"
+          tar -xjf "$RUNNER_TEMP/boost.tar.bz2" -C "$B/upstream/vendor/boost" --strip-components=1 boost_1_81_0/boost boost_1_81_0/LICENSE_1_0.txt
+          export RUSTUP_HOME="$B/rustup"
+          export CARGO_HOME="$B/cargo"
+          rustup toolchain install 1.99.1 --profile minimal
+          rustup target add --toolchain 1.99.1 x86_64-pc-windows-gnu
+          rustup run 1.99.1 rustc -Vv > "$B/metadata/rustc.txt"
+          rustup run 1.99.1 cargo fetch --locked --manifest-path "$B/upstream/Cargo.toml"
+          python3 -m pip install --target "$B/tools/python-cmake" cmake==3.31.6
+          mkdir -p "$B/mingw/usr/bin" "$B/mingw/usr/lib/gcc" "$B/mingw/usr/share"
+          cp -a /usr/x86_64-w64-mingw32 "$B/mingw/usr/"
+          cp -a /usr/lib/gcc/x86_64-w64-mingw32 "$B/mingw/usr/lib/gcc/"
+          cp -a /usr/bin/x86_64-w64-mingw32-* "$B/mingw/usr/bin/"
+          cp -a /usr/share/mingw-w64 "$B/mingw/usr/share/"
+          for tool in gcc g++ cpp gcc-ar gcc-nm gcc-ranlib; do
+            test ! -f "$B/mingw/usr/bin/x86_64-w64-mingw32-$tool-posix" || ln -sfn "x86_64-w64-mingw32-$tool-posix" "$B/mingw/usr/bin/x86_64-w64-mingw32-$tool"
+          done
+          # Include a tiny launcher dependency crate without game source or payload.
+          mkdir -p "$B/launcher-deps/src"
+          printf 'fn main() {}\n' > "$B/launcher-deps/src/main.rs"
+          cat > "$B/launcher-deps/Cargo.toml" <<'TOML'
+          [package]
+          name = "g1-launcher-dependency-cache"
+          version = "0.1.0"
+          edition = "2021"
+          [dependencies]
+          zip = { version = "=0.6.4", default-features = false, features = ["deflate"] }
+          windows-sys = { version = "=0.61.0", features = ["Win32_Foundation", "Win32_System_Diagnostics_Debug", "Win32_System_Kernel", "Win32_System_Threading", "Win32_System_Memory", "Win32_Storage_FileSystem", "Win32_System_ProcessStatus", "Win32_System_LibraryLoader", "Win32_Security", "Win32_UI_Controls", "Win32_UI_WindowsAndMessaging", "Win32_UI_Shell"] }
+          TOML
+          rustup run 1.99.1 cargo fetch --manifest-path "$B/launcher-deps/Cargo.toml"
+          # Cache the exact older ZIP dependencies recorded in the preserved launcher lock.
+          for spec in byteorder:1.4.3 cfg-if:1.0.0 crc32fast:1.3.2 crossbeam-utils:0.8.14 flate2:1.0.25 miniz_oxide:0.6.2 adler:1.0.2 windows-link:0.2.0; do
+            crate="${spec%:*}"; version="${spec#*:}"
+            rustup run 1.99.1 cargo info "$crate@$version" >/dev/null
+          done
+          printf '# Offline build dependency archive\nPinned upstream, Rust, Cargo cache, Boost and MinGW. Contains no game executable or private game data. Compiler/package identities are in metadata/. Verify archive SHA-256 before extraction.\n' > "$B/README_MEMORY_ZIP_POLICY.md"
+          # Strip unrelated font files: this artifact is a compiler/dependency pack only.
+          rm -rf "$B/upstream/touchHLE_fonts"
+          rm -rf "$B/cargo/bin" "$B/rustup/downloads" "$B/rustup/tmp"
+          tar -czf "$RUNNER_TEMP/g1-offline-deps.tar.gz" -C "$RUNNER_TEMP" g1-offline-deps
+          sha256sum "$RUNNER_TEMP/g1-offline-deps.tar.gz" > "$RUNNER_TEMP/g1-offline-deps.sha256"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: G1-PC-Offline-Build-Dependencies
+          path: |
+            ${{ runner.temp }}/g1-offline-deps.tar.gz
+            ${{ runner.temp }}/g1-offline-deps.sha256
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 3
