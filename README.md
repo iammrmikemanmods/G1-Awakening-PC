@@ -8,9 +8,6 @@ G1 Awakening brings its original tactical campaign to PC, with desktop controls,
 
 [Releases](https://github.com/iammrmikemanmods/G1-Awakening-PC/releases) · [Controls](docs/controls.md) · [Source and building](docs/building.md) · [Release notes](releases/v1.0/notes.md)
 
-<!-- release-status:start -->
-**1.0 download status: upload pending.** The complete game EXE and matching source are packaged; the release becomes downloadable once those files are attached and verified.
-<!-- release-status:end -->
 
 ## Project status
 
