@@ -2,7 +2,7 @@
 
 **A faithful desktop adaptation by iammrmikeman.**
 
-G1 Awakening brings its original tactical campaign to PC, with desktop controls, high-resolution presentation, a modern opening cinematic and refreshed project credits.
+G1 Awakening brings its original tactical campaign to PC, with desktop controls, high-resolution presentation, and numerous other improvements.
 
 ## Project status
 
