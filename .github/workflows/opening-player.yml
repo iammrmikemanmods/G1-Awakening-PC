@@ -1,0 +1,42 @@
+name: Opening helper build (not full game)
+on:
+  push:
+    branches: [main]
+    paths: ['desktop/opening/**', 'tests/**', '.github/workflows/opening-player.yml']
+  pull_request:
+    paths: ['desktop/opening/**', 'tests/**', '.github/workflows/opening-player.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: opening-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          persist-credentials: false
+      - name: Configure
+        run: cmake -S desktop/opening -B build/opening -A x64
+      - name: Compile Windows helper and tests
+        run: cmake --build build/opening --config Release
+      - name: Run contract tests
+        run: ctest --test-dir build/opening -C Release --output-on-failure
+      - name: Prepare helper-only artifact
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item build/opening/Release/G1OpeningPlayer.exe dist/
+          $hash = (Get-FileHash dist/G1OpeningPlayer.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  G1OpeningPlayer.exe" | Set-Content dist/SHA256SUMS.txt -Encoding utf8
+          "Opening helper only; NOT the game. Commit: $env:GITHUB_SHA. Compilation and contract tests do not establish video playback or game integration." | Set-Content dist/README.txt
+          "# Archive policy`nPreserve all files and verify SHA256SUMS.txt. This helper is not a game release. No runtime, game assets or media are included." | Set-Content dist/README_MEMORY_ZIP_POLICY.md
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: G1OpeningPlayer-Windows-x64-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30

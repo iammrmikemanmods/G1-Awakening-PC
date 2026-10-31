@@ -1,0 +1,14 @@
+/build/
+/dist/
+*.user
+*.suo
+__pycache__/
+*.pyc
+*.ipa
+*.mp4
+*.exe
+*.dll
+*.pdb
+*.ttf
+*.otf
+/touchHLE_sandbox/
